@@ -1,0 +1,38 @@
+# Entornos virtuales de Python
+venv/
+env/
+*.pyc
+__pycache__/
+.env
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE
+.idea/
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# Archivos de dependencias de Node
+frontend/node_modules/
+frontend/build/
+frontend/.pnp
+frontend/.pnp.js
+
+# Archivos de dependencias de Python
+backend/venv/
+backend/env/
+backend/*.sqlite3
+backend/media/
+backend/static_root/ # O staticfiles_build/ si usas collectstatic con otro nombre
+
+# Cobertura de pruebas
+.coverage
+htmlcov/
+
+# Archivos de compilación de SASS/LESS
+.sass-cache/

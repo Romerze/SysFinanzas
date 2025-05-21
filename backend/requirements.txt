@@ -1,0 +1,8 @@
+Django>=4.2,<5.0
+djangorestframework>=3.14,<3.15
+psycopg2-binary>=2.9,<3.0  # Para PostgreSQL
+python-dotenv>=1.0,<1.1
+djangorestframework-simplejwt>=5.3,<5.4 # Para JWT
+bcrypt>=4.0,<4.1 # Para hashing de contraseñas
+django-filter>=24.2,<25.0 # Añadido para filtros
+django-cors-headers>=4.0.0,<5.0.0 # Añadido para CORS
