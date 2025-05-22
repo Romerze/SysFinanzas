@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState } from 'react'; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import RegistrationPage from './pages/RegistrationPage'; 
+import CategoryManagementPage from './pages/CategoryManagementPage'; 
+import IncomesPage from './pages/IncomesPage'; 
+import ExpensesPage from './pages/ExpensesPage'; // Importar ExpensesPage
+import ProfilePage from './pages/ProfilePage'; // Añadido para HU011
+import MainLayout from './components/MainLayout'; // Importar MainLayout
 
 // Importar Box de MUI
-import Box from '@mui/material/Box';
+// import Box from '@mui/material/Box'; // Ya no es necesario aquí
 
 // import './App.css'; // Lo mantendremos comentado
 
@@ -18,44 +23,51 @@ function App() {
         setIsUserAuthenticated(!!localStorage.getItem('accessToken'));
     };
 
+    // Componente para rutas protegidas que usan MainLayout
+    const ProtectedRoutesLayout = () => {
+        if (!isUserAuthenticated) {
+            return <Navigate to="/login" replace />;
+        }
+        // Pasamos onLogout (que es handleAuthChange) a MainLayout
+        return <MainLayout onLogout={handleAuthChange} />; 
+        // MainLayout internamente usará <Outlet /> para renderizar las rutas hijas
+    };
+
     return (
         <Router>
-            {/* Usar Box de MUI para un mejor control del layout y centrado */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column', // Apila las páginas verticalmente (aunque solo una se muestra)
-                    alignItems: 'center',    // Esto centrará el componente de la ruta activa (ej. el Container de LoginPage)
-                    minHeight: '100vh',      // Asegura que el Box ocupe al menos toda la altura de la vista
-                    // pt: 4,                // Opcional: Padding superior global si es necesario
-                    // justifyContent: 'center' // Opcional: para centrar verticalmente también, LoginPage ya tiene su propio margen superior.
-                }}
-            >
-                <Routes>
-                    <Route 
-                        path="/login" 
-                        element={
-                            isUserAuthenticated ? (
-                                <Navigate to="/dashboard" replace />
-                            ) : (
-                                <LoginPage onLoginSuccess={handleAuthChange} />
-                            )
-                        }
-                    />
-                    <Route 
-                        path="/register" 
-                        element={<RegistrationPage />} 
-                    />
-                    <Route 
-                        path="/dashboard" 
-                        element={isUserAuthenticated ? <DashboardPage onLogout={handleAuthChange} /> : <Navigate to="/login" replace />} 
-                    />
-                    <Route 
-                        path="*" 
-                        element={isUserAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
-                    />
-                </Routes>
-            </Box>
+            {/* El Box global se elimina, MainLayout se encargará de su propia estructura */}
+            <Routes>
+                <Route 
+                    path="/login" 
+                    element={
+                        isUserAuthenticated ? (
+                            <Navigate to="/dashboard" replace />
+                        ) : (
+                            <LoginPage onLoginSuccess={handleAuthChange} />
+                        )
+                    }
+                />
+                <Route 
+                    path="/register" 
+                    element={<RegistrationPage />} 
+                />
+                
+                {/* Rutas protegidas que usarán MainLayout */}
+                <Route element={<ProtectedRoutesLayout />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/incomes" element={<IncomesPage />} />
+                    <Route path="/categories" element={<CategoryManagementPage />} /> {/* Ruta actualizada */}
+                    <Route path="/expenses" element={<ExpensesPage />} /> {/* Nueva ruta para Gastos */}
+                    <Route path="/profile" element={<ProfilePage />} /> {/* Añadido para HU011 */}
+                    {/* Aquí puedes añadir más rutas que usen MainLayout en el futuro */}
+                </Route>
+
+                {/* Redirección por defecto */}
+                <Route 
+                    path="*" 
+                    element={isUserAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
+                />
+            </Routes>
         </Router>
     );
 }

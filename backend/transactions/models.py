@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 
 # Create your models here.
@@ -48,3 +49,21 @@ class Income(models.Model):
 
     class Meta:
         ordering = ['-date', '-created_at']
+
+class Expense(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses')
+    description = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+    payment_method = models.CharField(max_length=50, blank=True, null=True) # Opcional
+    recurrence = models.CharField(max_length=50, blank=True, null=True) # Opcional: 'diario', 'semanal', 'mensual', etc.
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.description} - {self.amount} ({self.user.username})"
+
+    class Meta:
+        ordering = ['-date']

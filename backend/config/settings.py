@@ -176,6 +176,29 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5176",
 ]
 
+CORS_ALLOW_CREDENTIALS = True # Si planeas usar cookies o autenticación basada en sesión con CORS
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS', # Importante para preflight requests
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 # Opcional: si quieres ser más permisivo durante el desarrollo (NO para producción)
 # CORS_ALLOW_ALL_ORIGINS = True 
 
@@ -199,3 +222,16 @@ CORS_ALLOWED_ORIGINS = [
 
 # Modelo de usuario personalizado (si se decide usar uno más adelante)
 # AUTH_USER_MODEL = 'accounts.CustomUser' # Descomentar si se crea un CustomUser
+
+# Django REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication', 
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # 'PAGE_SIZE': 10,
+}

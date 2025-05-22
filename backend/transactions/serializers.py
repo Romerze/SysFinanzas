@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Income
+from .models import Category, Income, Expense
 from django.contrib.auth.models import User # Necesario si queremos mostrar info del usuario
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -36,39 +36,100 @@ class CategorySerializer(serializers.ModelSerializer):
         return value
 
 class IncomeSerializer(serializers.ModelSerializer):
-    # Para mostrar el nombre de la categoría en lugar de solo el ID
+    user = serializers.ReadOnlyField(source='user.username') # Para mostrar username en lugar de ID
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
-    # Para permitir enviar el ID de la categoría al crear/actualizar
     category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), # Podríamos filtrar esto más adelante
-        allow_null=True,
+        queryset=Category.objects.all(), 
+        allow_null=True, 
         required=False
     )
 
     class Meta:
         model = Income
         fields = [
-            'id', 'user', 'amount', 'date', 'category', 'category_name', 
-            'source', 'recurrence', 'description', 'created_at'
+            'id', 
+            'user',
+            'amount', 
+            'date', 
+            'category', 
+            'category_name', 
+            'source', 
+            'recurrence',
+            'description', 
+            'created_at',
+            'updated_at',
         ]
-        read_only_fields = ['user', 'created_at'] # El usuario se asignará automáticamente
+        read_only_fields = ['user', 'created_at', 'updated_at', 'category_name']
 
     def validate_amount(self, value):
         if value <= 0:
             raise serializers.ValidationError("El monto del ingreso debe ser positivo.")
         return value
-    
+
     def validate_category(self, value):
-        # Asegurar que la categoría pertenezca al usuario o sea global
+        """
+        Verifica que la categoría pertenezca al usuario o sea una categoría global.
+        """
         request = self.context.get('request')
         if value and request and hasattr(request, 'user') and request.user.is_authenticated:
+            # Permitir categorías globales (user=None) o categorías del usuario actual
             if value.user is not None and value.user != request.user:
-                raise serializers.ValidationError("Categoría no válida.")
-        # Si no hay request o usuario (ej. tests), no podemos validar esto
+                raise serializers.ValidationError("Categoría no válida o no pertenece al usuario.")
+        # Si value es None (categoría opcional), no hay nada que validar aquí.
         return value
 
     def create(self, validated_data):
-        # Asignar el usuario actual al crear el ingreso
-        validated_data['user'] = self.context['request'].user
+        # El usuario se asigna en la vista (perform_create)
+        # La categoría ya viene como una instancia debido a PrimaryKeyRelatedField
+        # o es None si se permitió.
+        
+        # Manejo de 'recurrence' si el frontend no lo envía directamente
+        # Si el frontend envía 'recurrence' como 'none', 'monthly', etc., no se necesita esto.
+        # is_recurrent = validated_data.pop('is_recurrent_input', False) # Suponiendo que el frontend envía esto
+        # if is_recurrent:
+        #     validated_data['recurrence'] = 'monthly' 
+        # else:
+        #     validated_data['recurrence'] = 'none'
         return super().create(validated_data)
 
+    def update(self, instance, validated_data):
+        # La categoría ya viene como una instancia o None.
+        # El usuario no debería cambiar.
+        # validated_data.pop('user', None) # Prevenir actualización del usuario
+        return super().update(instance, validated_data)
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='user.username')
+    # category = CategorySerializer() # Si quieres el objeto categoría completo al leer
+    category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True) # Para mostrar el nombre, permitir null si no hay categoría
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), 
+        source='category', 
+        write_only=True, 
+        allow_null=True, # Permitir que la categoría sea nula
+        required=False   # Hacer que el campo no sea estrictamente requerido si se permite nulo
+    )
+
+    class Meta:
+        model = Expense
+        fields = [
+            'id', 'user', 'description', 'amount', 'date', 
+            'category_id', 'category_name', 
+            'payment_method', 'recurrence', 
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['user', 'created_at', 'updated_at', 'category_name']
+
+    def validate_category_id(self, value):
+        """
+        Verifica que la categoría pertenezca al usuario o sea una categoría global.
+        """
+        request = self.context.get('request')
+        # Si 'value' es None (porque allow_null=True), no hay nada que validar aquí.
+        if value and request and hasattr(request, 'user'):
+            if value.user is not None and value.user != request.user:
+                raise serializers.ValidationError("Categoría no válida o no pertenece al usuario.")
+        return value
+
+    # La asignación del usuario (user) se maneja en la vista (perform_create).
+    # No es necesario sobreescribir el método create() aquí para eso.
